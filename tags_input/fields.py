@@ -50,7 +50,15 @@ class TagsInputField(forms.ModelMultipleChoiceField):
                 for v in value:
                     if v in missing:
                         o = self.queryset.model(**split_func(v))
-                        o.clean()
+                        try:
+                            o.full_clean()
+                        except ValidationError as e:
+                            print e
+                            if hasattr(e, 'error_dict'):
+                                # Return the first error, if there is a dictionary
+                                raise ValidationError(e.error_dict.itervalues().next())
+                            else:
+                                raise e
                         o.save()
                         values[v.lower()] = o.pk
             else:
